@@ -16,12 +16,12 @@ public class BaseStorage : MonoBehaviour
 
         if (_resources.Count >= _newUnitPrice)
         {
-            EnoughResourcesToUnitSpawned?.Invoke();
-
             for (int i = 0; i < _newUnitPrice; i++)
             {
-                _resources.RemoveAt(i);
+                _resources.RemoveAt(_resources.Count - 1);
             }
+
+            EnoughResourcesToUnitSpawned?.Invoke();
         }
 
         ResourceCountChanged?.Invoke(_resources.Count);

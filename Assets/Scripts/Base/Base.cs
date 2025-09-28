@@ -12,17 +12,21 @@ public class Base : MonoBehaviour
     [SerializeField] private BaseStorage _baseStorage;
     [SerializeField] private ResourceCountShower _resourceCountShower;
     [SerializeField] private UnitSpawner _unitSpawner;
+    [SerializeField] private UnitSpawnPoint _unitSpawnPoint;
+    [SerializeField] private ResourcesSpawner _resourcesSpawner;
 
     private Coroutine _coroutine;
     private bool _isGiveCommandsEnable = true;
-
+    
     private void OnEnable()
     {
         _resourceScaner.ResourceDetected += _globalStorage.AddResourcePosition;
         _resourceBaseHandler.ResourceBaseDetected += _globalStorage.RemoveResource;
         _resourceBaseHandler.ResourceBaseDetected += _baseStorage.AddAvailableResource;
+        _resourceBaseHandler.ResourceBaseDetected += _resourcesSpawner.ReleaseObjectToPool;
         _baseStorage.ResourceCountChanged += _resourceCountShower.ChangeResourceCount;
-        _baseStorage.EnoughResourcesToUnitSpawned += _unitSpawner.SpawnUnit;
+        _baseStorage.EnoughResourcesToUnitSpawned += GiveSpawnCommand;
+        _unitSpawner.UnitSpawned += AddUnit;
     }
 
     private void OnDisable()
@@ -30,13 +34,26 @@ public class Base : MonoBehaviour
         _resourceScaner.ResourceDetected -= _globalStorage.AddResourcePosition;
         _resourceBaseHandler.ResourceBaseDetected -= _globalStorage.RemoveResource;
         _resourceBaseHandler.ResourceBaseDetected -= _baseStorage.AddAvailableResource;
+        _resourceBaseHandler.ResourceBaseDetected += _resourcesSpawner.ReleaseObjectToPool;
         _baseStorage.ResourceCountChanged -= _resourceCountShower.ChangeResourceCount;
-        _baseStorage.EnoughResourcesToUnitSpawned -= _unitSpawner.SpawnUnit;
+        _baseStorage.EnoughResourcesToUnitSpawned -= GiveSpawnCommand;
+        _unitSpawner.UnitSpawned -= AddUnit;
     }
 
     private void Start()
     {
+        GiveSpawnCommand();
         StartCommandGive();
+    }
+
+    public void GiveSpawnCommand()
+    {
+        _unitSpawner.SpawnUnit(_unitSpawnPoint.transform);
+    }
+
+    public void AddUnit(Unit unit)
+    {
+        _units.Add(unit);
     }
 
     public void GiveCommandUnit()

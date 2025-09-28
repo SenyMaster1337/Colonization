@@ -3,7 +3,6 @@ using UnityEngine;
 
 public class Unit : MonoBehaviour
 {
-    //[SerializeField] private UnitSpawnPoint _centerBaseSpawnPoint;
     [SerializeField] private AnimatorParameters _animatorParameters;
     [SerializeField] private Transform _transformRenderer;
     [SerializeField] private TargetFlipper _flipper;
@@ -12,8 +11,9 @@ public class Unit : MonoBehaviour
 
     private Coroutine _lifetimeCoroutine;
     private Resource _resourceTarget;
+    private Vector3 _resourceTargetStartPosition;
 
-    private Transform _centerBaseSpawnPoint;
+    private Transform _spawnPoint;
     private Vector3 _randomSpawnPoint;
     private float _minRandomOffsetX = -7f;
     private float _maxRandomOffsetX = 6.5f;
@@ -24,29 +24,33 @@ public class Unit : MonoBehaviour
 
     private void Awake()
     {
-        _centerBaseSpawnPoint = GetComponentInParent<UnitSpawnPoint>().transform;
-        CreateSpawnPointToBase();
         IsIdle = true;
+    }
+
+    public void Init(Transform spawnPoint)
+    {
+        _spawnPoint = spawnPoint;
+        transform.SetParent(spawnPoint);
+    }
+
+    public void CreateSpawnPointToBase()
+    {
+        Vector3 centerBaseSpawnPoint = _spawnPoint.transform.position;
+        float randomOffsetX = UnityEngine.Random.Range(_minRandomOffsetX, _maxRandomOffsetX);
+        float randomOffsetZ = UnityEngine.Random.Range(_minRandomOffsetZ, _maxRandomOffsetZ);
+
+        _randomSpawnPoint = new Vector3(centerBaseSpawnPoint.x + randomOffsetX, centerBaseSpawnPoint.y, centerBaseSpawnPoint.z + randomOffsetZ);
     }
 
     public void StartMission(Resource resourceTarget)
     {
         _resourceTarget = resourceTarget;
+        _resourceTargetStartPosition = resourceTarget.transform.position;
 
         if (_lifetimeCoroutine != null)
             StopCoroutine(_lifetimeCoroutine);
 
         _lifetimeCoroutine = StartCoroutine(PerformMission());
-    }
-
-    private void CreateSpawnPointToBase()
-    {
-        Vector3 centerBaseSpawnPoint = _centerBaseSpawnPoint.transform.position;
-        Debug.Log(centerBaseSpawnPoint);
-        float randomOffsetX = UnityEngine.Random.Range(_minRandomOffsetX, _maxRandomOffsetX);
-        float randomOffsetZ = UnityEngine.Random.Range(_minRandomOffsetZ, _maxRandomOffsetZ);
-
-        _randomSpawnPoint = new Vector3(centerBaseSpawnPoint.x + randomOffsetX, centerBaseSpawnPoint.y, centerBaseSpawnPoint.z + randomOffsetZ);
     }
 
     private IEnumerator PerformMission()
@@ -68,12 +72,13 @@ public class Unit : MonoBehaviour
 
         yield return _mover.MoveToPosition(_resourceTarget.transform.position);
 
+        if(_resourceTarget.transform.position == _resourceTargetStartPosition)
         _resourcePicker.PickUp(_resourceTarget);
     }
 
     private IEnumerator RunToBase()
     {
-        transform.SetParent(_centerBaseSpawnPoint.transform);
+        transform.SetParent(_spawnPoint.transform);
 
         yield return _flipper.Flip(_transformRenderer, _randomSpawnPoint);
 

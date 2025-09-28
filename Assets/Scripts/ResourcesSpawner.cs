@@ -3,7 +3,6 @@ using UnityEngine;
 
 public class ResourcesSpawner : Spawners.Spawner<Resource>
 {
-    [SerializeField] private ResourceBaseHandler _resourcesBaseHandler;
     [SerializeField] private float _delay;
 
     private int _minRandomPositionX = 7;
@@ -13,16 +12,6 @@ public class ResourcesSpawner : Spawners.Spawner<Resource>
     private int _positionY = 0;
     private Coroutine _lifetimeCoroutine;
     private bool _isSpawnerEnabled = true;
-
-    private void OnEnable()
-    {
-        _resourcesBaseHandler.ResourceBaseDetected += ReleaseObjectToPool;
-    }
-
-    private void OnDisable()
-    {
-        _resourcesBaseHandler.ResourceBaseDetected -= ReleaseObjectToPool;
-    }
 
     private void Start()
     {
