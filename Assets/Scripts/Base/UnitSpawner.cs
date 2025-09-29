@@ -4,6 +4,7 @@ using UnityEngine;
 public class UnitSpawner : Spawners.Spawner<Unit>
 {
     private Transform _spawnPoint;
+    private Base _base;
 
     public event Action<Unit> UnitSpawned;
 

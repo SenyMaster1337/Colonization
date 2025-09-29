@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using static Unity.IO.LowLevel.Unsafe.AsyncReadManagerMetrics;
 
 public class Base : MonoBehaviour
 {
@@ -13,11 +14,15 @@ public class Base : MonoBehaviour
     [SerializeField] private ResourceCountShower _resourceCountShower;
     [SerializeField] private UnitSpawner _unitSpawner;
     [SerializeField] private UnitSpawnPoint _unitSpawnPoint;
+
     [SerializeField] private ResourcesSpawner _resourcesSpawner;
+    [SerializeField] private NewBaseFlagPointer _newBaseFlagPointer;
 
     private Coroutine _coroutine;
     private bool _isGiveCommandsEnable = true;
-    
+    private bool _isCommandToCreateNewBase = false;
+    private Flag _flag;
+
     private void OnEnable()
     {
         _resourceScaner.ResourceDetected += _globalStorage.AddResourcePosition;
@@ -27,6 +32,7 @@ public class Base : MonoBehaviour
         _baseStorage.ResourceCountChanged += _resourceCountShower.ChangeResourceCount;
         _baseStorage.EnoughResourcesToUnitSpawned += GiveSpawnCommand;
         _unitSpawner.UnitSpawned += AddUnit;
+        _newBaseFlagPointer.FlagInstalled += GiveCreateNewBaseCommand;
     }
 
     private void OnDisable()
@@ -38,12 +44,19 @@ public class Base : MonoBehaviour
         _baseStorage.ResourceCountChanged -= _resourceCountShower.ChangeResourceCount;
         _baseStorage.EnoughResourcesToUnitSpawned -= GiveSpawnCommand;
         _unitSpawner.UnitSpawned -= AddUnit;
+        _newBaseFlagPointer.FlagInstalled += GiveCreateNewBaseCommand;
     }
 
     private void Start()
     {
         GiveSpawnCommand();
         StartCommandGive();
+    }
+
+    public void GiveCreateNewBaseCommand(Flag flag)
+    {
+        _flag = flag;
+        _isCommandToCreateNewBase = true;
     }
 
     public void GiveSpawnCommand()
@@ -64,13 +77,22 @@ public class Base : MonoBehaviour
         {
             if (_units[i].IsIdle)
             {
-                Resource targetResource = _globalStorage.GiveTargetResource();
+                if (_isCommandToCreateNewBase == true)
+                {
+                    _units[i].StartCreateNewBase(_flag);
+                    _isCommandToCreateNewBase = false;
+                }
+                else
+                {
+                    Resource targetResource = _globalStorage.GiveTargetResource();
 
-                if (targetResource == null)
-                    return;
+                    if (targetResource == null)
+                        return;
 
-                _units[i].StartMission(targetResource);
-                _isFoundFreeUnit = true;
+                    _units[i].StartMission(targetResource);
+                    _isFoundFreeUnit = true;
+                }
+
             }
         }
     }

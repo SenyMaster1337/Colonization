@@ -1,5 +1,6 @@
 using System.Collections;
 using UnityEngine;
+using static Unity.IO.LowLevel.Unsafe.AsyncReadManagerMetrics;
 
 public class Unit : MonoBehaviour
 {
@@ -8,9 +9,11 @@ public class Unit : MonoBehaviour
     [SerializeField] private TargetFlipper _flipper;
     [SerializeField] private UnitMover _mover;
     [SerializeField] private ResourcePicker _resourcePicker;
+    [SerializeField] private Base _base;
 
-    private Coroutine _lifetimeCoroutine;
+    private Coroutine _coroutine;
     private Resource _resourceTarget;
+    private Flag _flag;
     private Vector3 _resourceTargetStartPosition;
 
     private Transform _spawnPoint;
@@ -33,6 +36,12 @@ public class Unit : MonoBehaviour
         transform.SetParent(spawnPoint);
     }
 
+    public void CreateBase()
+    {
+        Base base1 = Instantiate(_base);
+        base1.transform.position = _flag.transform.position;
+    }
+
     public void CreateSpawnPointToBase()
     {
         Vector3 centerBaseSpawnPoint = _spawnPoint.transform.position;
@@ -42,15 +51,47 @@ public class Unit : MonoBehaviour
         _randomSpawnPoint = new Vector3(centerBaseSpawnPoint.x + randomOffsetX, centerBaseSpawnPoint.y, centerBaseSpawnPoint.z + randomOffsetZ);
     }
 
+    public void StartCreateNewBase(Flag flag)
+    {
+        _flag = flag;
+
+        if (_coroutine != null)
+            StopCoroutine(_coroutine);
+
+        _coroutine = StartCoroutine(PerformCreateNewBase());
+    }
+
+    private IEnumerator PerformCreateNewBase()
+    {
+        yield return RunToNewSpawnPointBase();
+
+        CreateBase();
+    }
+
+    private IEnumerator RunToNewSpawnPointBase()
+    {
+        transform.SetParent(null);
+
+        IsIdle = false;
+
+        yield return _flipper.Flip(_transformRenderer, _flag.transform.position);
+
+        _animatorParameters.PlayRun();
+
+        yield return _mover.MoveToPosition(_flag.transform.position);
+
+        _flag.Remove();
+    }
+
     public void StartMission(Resource resourceTarget)
     {
         _resourceTarget = resourceTarget;
         _resourceTargetStartPosition = resourceTarget.transform.position;
 
-        if (_lifetimeCoroutine != null)
-            StopCoroutine(_lifetimeCoroutine);
+        if (_coroutine != null)
+            StopCoroutine(_coroutine);
 
-        _lifetimeCoroutine = StartCoroutine(PerformMission());
+        _coroutine = StartCoroutine(PerformMission());
     }
 
     private IEnumerator PerformMission()
@@ -72,8 +113,8 @@ public class Unit : MonoBehaviour
 
         yield return _mover.MoveToPosition(_resourceTarget.transform.position);
 
-        if(_resourceTarget.transform.position == _resourceTargetStartPosition)
-        _resourcePicker.PickUp(_resourceTarget);
+        if (_resourceTarget.transform.position == _resourceTargetStartPosition)
+            _resourcePicker.PickUp(_resourceTarget);
     }
 
     private IEnumerator RunToBase()
