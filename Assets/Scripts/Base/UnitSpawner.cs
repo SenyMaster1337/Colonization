@@ -3,15 +3,16 @@ using UnityEngine;
 
 public class UnitSpawner : Spawners.Spawner<Unit>
 {
+    [SerializeField] private BaseCreator _baseCreator;
+
     private Transform _spawnPoint;
-    private Base _base;
 
     public event Action<Unit> UnitSpawned;
 
     public override Unit CreateFunc()
     {
         Unit unit = Instantiate(Prefab);
-        unit.Init(_spawnPoint);
+        unit.Init(_spawnPoint, _baseCreator);
 
         return unit;
     }

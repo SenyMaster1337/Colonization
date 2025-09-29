@@ -9,14 +9,15 @@ public class Unit : MonoBehaviour
     [SerializeField] private TargetFlipper _flipper;
     [SerializeField] private UnitMover _mover;
     [SerializeField] private ResourcePicker _resourcePicker;
-    [SerializeField] private Base _base;
+
+    private Transform _spawnPoint;
+    private BaseCreator _baseCreator;
 
     private Coroutine _coroutine;
     private Resource _resourceTarget;
     private Flag _flag;
     private Vector3 _resourceTargetStartPosition;
 
-    private Transform _spawnPoint;
     private Vector3 _randomSpawnPoint;
     private float _minRandomOffsetX = -7f;
     private float _maxRandomOffsetX = 6.5f;
@@ -30,16 +31,17 @@ public class Unit : MonoBehaviour
         IsIdle = true;
     }
 
-    public void Init(Transform spawnPoint)
+    public void Init(Transform spawnPoint, BaseCreator baseCreator)
     {
         _spawnPoint = spawnPoint;
         transform.SetParent(spawnPoint);
+        _baseCreator = baseCreator;
     }
 
-    public void CreateBase()
+    public void ChangeSpawnPoint(Vector3 spawnPoint)
     {
-        Base base1 = Instantiate(_base);
-        base1.transform.position = _flag.transform.position;
+        _spawnPoint.transform.position = spawnPoint;
+        CreateSpawnPointToBase();
     }
 
     public void CreateSpawnPointToBase()
@@ -65,7 +67,11 @@ public class Unit : MonoBehaviour
     {
         yield return RunToNewSpawnPointBase();
 
-        CreateBase();
+        _baseCreator.CreateBase(_flag.transform.position, this);
+
+        _animatorParameters.StopRun();
+
+        IsIdle = true;
     }
 
     private IEnumerator RunToNewSpawnPointBase()
@@ -79,6 +85,8 @@ public class Unit : MonoBehaviour
         _animatorParameters.PlayRun();
 
         yield return _mover.MoveToPosition(_flag.transform.position);
+
+        ChangeSpawnPoint(_flag.transform.position);
 
         _flag.Remove();
     }

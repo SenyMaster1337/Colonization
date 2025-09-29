@@ -12,11 +12,11 @@ public class Base : MonoBehaviour
     [SerializeField] private GlobalStorage _globalStorage;
     [SerializeField] private BaseStorage _baseStorage;
     [SerializeField] private ResourceCountShower _resourceCountShower;
-    [SerializeField] private UnitSpawner _unitSpawner;
     [SerializeField] private UnitSpawnPoint _unitSpawnPoint;
 
     [SerializeField] private ResourcesSpawner _resourcesSpawner;
     [SerializeField] private NewBaseFlagPointer _newBaseFlagPointer;
+    [SerializeField] private UnitSpawner _unitSpawner;
 
     private Coroutine _coroutine;
     private bool _isGiveCommandsEnable = true;
@@ -28,11 +28,15 @@ public class Base : MonoBehaviour
         _resourceScaner.ResourceDetected += _globalStorage.AddResourcePosition;
         _resourceBaseHandler.ResourceBaseDetected += _globalStorage.RemoveResource;
         _resourceBaseHandler.ResourceBaseDetected += _baseStorage.AddAvailableResource;
-        _resourceBaseHandler.ResourceBaseDetected += _resourcesSpawner.ReleaseObjectToPool;
         _baseStorage.ResourceCountChanged += _resourceCountShower.ChangeResourceCount;
         _baseStorage.EnoughResourcesToUnitSpawned += GiveSpawnCommand;
-        _unitSpawner.UnitSpawned += AddUnit;
-        _newBaseFlagPointer.FlagInstalled += GiveCreateNewBaseCommand;
+
+        if (_resourcesSpawner != null && _unitSpawner != null && _newBaseFlagPointer != null)
+        {
+            _resourceBaseHandler.ResourceBaseDetected += _resourcesSpawner.ReleaseObjectToPool;
+            _unitSpawner.UnitSpawned += AddUnit;
+            _newBaseFlagPointer.FlagInstalled += GiveCreateNewBaseCommand;
+        }
     }
 
     private void OnDisable()
@@ -40,16 +44,24 @@ public class Base : MonoBehaviour
         _resourceScaner.ResourceDetected -= _globalStorage.AddResourcePosition;
         _resourceBaseHandler.ResourceBaseDetected -= _globalStorage.RemoveResource;
         _resourceBaseHandler.ResourceBaseDetected -= _baseStorage.AddAvailableResource;
-        _resourceBaseHandler.ResourceBaseDetected += _resourcesSpawner.ReleaseObjectToPool;
         _baseStorage.ResourceCountChanged -= _resourceCountShower.ChangeResourceCount;
         _baseStorage.EnoughResourcesToUnitSpawned -= GiveSpawnCommand;
+        _resourceBaseHandler.ResourceBaseDetected += _resourcesSpawner.ReleaseObjectToPool;
         _unitSpawner.UnitSpawned -= AddUnit;
-        _newBaseFlagPointer.FlagInstalled += GiveCreateNewBaseCommand;
+        _newBaseFlagPointer.FlagInstalled -= GiveCreateNewBaseCommand;
     }
 
-    private void Start()
+    public void Init(ResourcesSpawner resourcesSpawner, NewBaseFlagPointer newBaseFlagPointer, UnitSpawner unitSpawner, Unit unit)
     {
-        GiveSpawnCommand();
+        _resourcesSpawner = resourcesSpawner;
+        _newBaseFlagPointer = newBaseFlagPointer;
+        _unitSpawner = unitSpawner;
+
+        _resourceBaseHandler.ResourceBaseDetected += _resourcesSpawner.ReleaseObjectToPool;
+        _unitSpawner.UnitSpawned += AddUnit;
+        _newBaseFlagPointer.FlagInstalled += GiveCreateNewBaseCommand;
+
+        AddUnit(unit);
         StartCommandGive();
     }
 
@@ -80,6 +92,7 @@ public class Base : MonoBehaviour
                 if (_isCommandToCreateNewBase == true)
                 {
                     _units[i].StartCreateNewBase(_flag);
+                    _units.RemoveAt(i);
                     _isCommandToCreateNewBase = false;
                 }
                 else
@@ -97,7 +110,7 @@ public class Base : MonoBehaviour
         }
     }
 
-    private void StartCommandGive()
+    public void StartCommandGive()
     {
         if (_coroutine != null)
             StopCoroutine(_coroutine);
