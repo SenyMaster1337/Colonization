@@ -7,6 +7,7 @@ public class Game : MonoBehaviour
     private void Start()
     {
         _base.GiveSpawnCommand();
+        _base.GiveSpawnCommand();
         _base.StartCommandGive();
     }
 }

@@ -3,29 +3,27 @@ using UnityEngine;
 
 public class UnitSpawner : Spawners.Spawner<Unit>
 {
-    [SerializeField] private BaseCreator _baseCreator;
-
-    private Transform _spawnPoint;
+    private Vector3 _spawnPoint;
 
     public event Action<Unit> UnitSpawned;
 
     public override Unit CreateFunc()
     {
         Unit unit = Instantiate(Prefab);
-        unit.Init(_spawnPoint, _baseCreator);
+        unit.InitSpawnPoint(_spawnPoint);
 
         return unit;
     }
 
     public override void ChangeParameters(Unit unit)
     {
-        unit.transform.position = _spawnPoint.position;
+        unit.transform.position = _spawnPoint;
         unit.CreateSpawnPointToBase();
         base.ChangeParameters(unit);
         UnitSpawned?.Invoke(unit);
     }
 
-    public void SpawnUnit(Transform spawnPoint)
+    public void SpawnUnit(Vector3 spawnPoint)
     {
         _spawnPoint = spawnPoint;
         SpawnObject();

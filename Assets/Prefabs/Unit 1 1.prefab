@@ -97,7 +97,6 @@ MonoBehaviour:
   _flipper: {fileID: 3004676664817103454}
   _mover: {fileID: 4544085714935670494}
   _resourcePicker: {fileID: 6787241651725123686}
-  _base: {fileID: 1663883484125351642, guid: f739122cf0feb034893866cbdd78ef77, type: 3}
 --- !u!114 &4544085714935670494
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -110,7 +109,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7757d6f6bab2de540ae7bd17aadb412d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _moveSpeed: 12
+  _moveSpeed: 18
 --- !u!1 &5163233364431368963
 GameObject:
   m_ObjectHideFlags: 0

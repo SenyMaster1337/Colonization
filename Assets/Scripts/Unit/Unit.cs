@@ -10,12 +10,15 @@ public class Unit : MonoBehaviour
     [SerializeField] private UnitMover _mover;
     [SerializeField] private ResourcePicker _resourcePicker;
 
-    private Transform _spawnPoint;
     private BaseCreator _baseCreator;
-
-    private Coroutine _coroutine;
+    private ResourcesSpawner _resourcesSpawner;
+    private GlobalStorage _globalStorage;
     private Resource _resourceTarget;
     private Flag _flag;
+    private Coroutine _coroutine;
+
+    private Vector3 _spawnPoint;
+    private Vector3 _tempSpawnPoint;
     private Vector3 _resourceTargetStartPosition;
 
     private Vector3 _randomSpawnPoint;
@@ -31,31 +34,31 @@ public class Unit : MonoBehaviour
         IsIdle = true;
     }
 
-    public void Init(Transform spawnPoint, BaseCreator baseCreator)
+    public void InitSpawnPoint(Vector3 spawnPoint)
     {
         _spawnPoint = spawnPoint;
-        transform.SetParent(spawnPoint);
-        _baseCreator = baseCreator;
     }
 
-    public void ChangeSpawnPoint(Vector3 spawnPoint)
+    public void InitBaseCreator(BaseCreator baseCreator)
     {
-        _spawnPoint.transform.position = spawnPoint;
-        CreateSpawnPointToBase();
+        _baseCreator = baseCreator;
     }
 
     public void CreateSpawnPointToBase()
     {
-        Vector3 centerBaseSpawnPoint = _spawnPoint.transform.position;
+        Vector3 centerBaseSpawnPoint = _spawnPoint;
         float randomOffsetX = UnityEngine.Random.Range(_minRandomOffsetX, _maxRandomOffsetX);
         float randomOffsetZ = UnityEngine.Random.Range(_minRandomOffsetZ, _maxRandomOffsetZ);
 
         _randomSpawnPoint = new Vector3(centerBaseSpawnPoint.x + randomOffsetX, centerBaseSpawnPoint.y, centerBaseSpawnPoint.z + randomOffsetZ);
     }
 
-    public void StartCreateNewBase(Flag flag)
+    public void StartCreateNewBase(Flag flag, ResourcesSpawner resourcesSpawner, GlobalStorage globalStorage)
     {
         _flag = flag;
+        _tempSpawnPoint = flag.transform.position;
+        _resourcesSpawner = resourcesSpawner;
+        _globalStorage = globalStorage;
 
         if (_coroutine != null)
             StopCoroutine(_coroutine);
@@ -63,11 +66,19 @@ public class Unit : MonoBehaviour
         _coroutine = StartCoroutine(PerformCreateNewBase());
     }
 
+    private IEnumerator ChangeSpawnPoint()
+    {
+        _spawnPoint = _tempSpawnPoint;
+        CreateSpawnPointToBase();
+
+        yield return null;
+    }
+
     private IEnumerator PerformCreateNewBase()
     {
         yield return RunToNewSpawnPointBase();
 
-        _baseCreator.CreateBase(_flag.transform.position, this);
+        _baseCreator.CreateBase(_flag.transform.position, this, _resourcesSpawner, _globalStorage, _baseCreator);
 
         _animatorParameters.StopRun();
 
@@ -76,8 +87,6 @@ public class Unit : MonoBehaviour
 
     private IEnumerator RunToNewSpawnPointBase()
     {
-        transform.SetParent(null);
-
         IsIdle = false;
 
         yield return _flipper.Flip(_transformRenderer, _flag.transform.position);
@@ -86,7 +95,7 @@ public class Unit : MonoBehaviour
 
         yield return _mover.MoveToPosition(_flag.transform.position);
 
-        ChangeSpawnPoint(_flag.transform.position);
+        yield return ChangeSpawnPoint();
 
         _flag.Remove();
     }
@@ -111,8 +120,6 @@ public class Unit : MonoBehaviour
 
     private IEnumerator RunToResource()
     {
-        transform.SetParent(null);
-
         IsIdle = false;
 
         yield return _flipper.Flip(_transformRenderer, _resourceTarget.transform.position);
@@ -127,8 +134,6 @@ public class Unit : MonoBehaviour
 
     private IEnumerator RunToBase()
     {
-        transform.SetParent(_spawnPoint.transform);
-
         yield return _flipper.Flip(_transformRenderer, _randomSpawnPoint);
 
         yield return _mover.MoveToPosition(_randomSpawnPoint);

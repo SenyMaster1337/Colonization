@@ -7,6 +7,9 @@ public class GlobalStorage : MonoBehaviour
     private List<Resource> _resourcesBusy = new List<Resource>();
     private int _firstResourceIndex = 0;
 
+    private float lastCallTime;
+    private float minInterval = 1f; // минимум 100ms между вызовами
+
     public int FreeResourcesCount => _resources.Count;
 
     public void AddResourcePosition(Resource resource)
@@ -17,16 +20,24 @@ public class GlobalStorage : MonoBehaviour
 
     public Resource GiveTargetResource()
     {
-        if (_resourcesBusy.Contains(_resources[_firstResourceIndex]) == false)
+        if (Time.time - lastCallTime >= minInterval)
         {
-            _resourcesBusy.Add(_resources[_firstResourceIndex]);
-            _resources.Remove(_resources[_firstResourceIndex]);
-            return _resourcesBusy[_resourcesBusy.Count - 1];
+            lastCallTime = Time.time;
+
+            if (_resourcesBusy.Contains(_resources[_firstResourceIndex]) == false)
+            {
+                _resourcesBusy.Add(_resources[_firstResourceIndex]);
+                _resources.Remove(_resources[_firstResourceIndex]);
+                return _resourcesBusy[_resourcesBusy.Count - 1];
+            }
+            else
+            {
+                return null;
+            }
+
         }
-        else
-        {
-            return null;
-        }
+
+        return null;
     }
 
     public void RemoveResource(Resource resource)
