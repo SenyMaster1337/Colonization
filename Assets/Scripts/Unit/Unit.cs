@@ -20,6 +20,7 @@ public class Unit : MonoBehaviour
     private Vector3 _spawnPoint;
     private Vector3 _tempSpawnPoint;
     private Vector3 _resourceTargetStartPosition;
+    private float _thresholdValue = 1f;
 
     private Vector3 _randomSpawnPoint;
     private float _minRandomOffsetX = -7f;
@@ -128,7 +129,7 @@ public class Unit : MonoBehaviour
 
         yield return _mover.MoveToPosition(_resourceTarget.transform.position);
 
-        if (_resourceTarget.transform.position == _resourceTargetStartPosition)
+        if (_resourceTarget.transform.position.IsEnoughClose(_resourceTargetStartPosition, _thresholdValue))
             _resourcePicker.PickUp(_resourceTarget);
     }
 

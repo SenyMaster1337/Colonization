@@ -129,7 +129,6 @@ public class Base : MonoBehaviour
                         return;
 
                     _units[i].StartMission(targetResource);
-                    Debug.Log(_units[i].IsIdle);
                     _isFoundFreeUnit = true;
                 }
 
