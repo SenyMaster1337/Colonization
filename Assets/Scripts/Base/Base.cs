@@ -16,8 +16,6 @@ public class Base : MonoBehaviour
     [SerializeField] private UnitSpawnPoint _unitSpawnPoint;
     [SerializeField] private ResourcesSpawner _resourcesSpawner;
     [SerializeField] private UnitSpawner _unitSpawner;
-    [SerializeField] private NewBaseFlagPointer _newBaseFlagPointer;
-    [SerializeField] private BaseCreator _baseCreator;
 
     private Coroutine _coroutine;
     private bool _isGiveCommandsEnable = true;
@@ -38,8 +36,6 @@ public class Base : MonoBehaviour
             _resourceBaseHandler.ResourceBaseDetected += _resourcesSpawner.ReleaseObjectToPool;
             _resourceBaseHandler.ResourceBaseDetected += _globalStorage.RemoveResource;
         }
-
-        _newBaseFlagPointer.FlagInstalled += GiveCreateNewBaseCommand;
     }
 
     private void OnDisable()
@@ -50,8 +46,6 @@ public class Base : MonoBehaviour
         _baseStorage.ResourceCountChanged -= _resourceCountShower.ChangeResourceCount;
         _resourceBaseHandler.ResourceBaseDetected -= _resourcesSpawner.ReleaseObjectToPool;
         _unitSpawner.UnitSpawned -= AddUnit;
-
-        _newBaseFlagPointer.FlagInstalled -= GiveCreateNewBaseCommand;
     }
 
     private void Start()
@@ -59,22 +53,15 @@ public class Base : MonoBehaviour
         CanBuildNewBase = false;
     }
 
-    public void Init(ResourcesSpawner resourcesSpawner, Unit unit, GlobalStorage globalStorage, BaseCreator baseCreator)
+    public void Init(ResourcesSpawner resourcesSpawner, Unit unit)
     {
         _resourcesSpawner = resourcesSpawner;
-        _globalStorage = globalStorage;
-        _baseCreator = baseCreator;
         AddUnit(unit);
         StartCommandGive();
 
         _resourceScaner.ResourceDetected += _globalStorage.AddResourcePosition;
         _resourceBaseHandler.ResourceBaseDetected += _resourcesSpawner.ReleaseObjectToPool;
         _resourceBaseHandler.ResourceBaseDetected += _globalStorage.RemoveResource;
-    }
-
-    public void PutFlag(Vector3 worldPosition)
-    {
-        _newBaseFlagPointer.Put(worldPosition);
     }
 
     public void GiveCreateNewBaseCommand(Flag flag)
@@ -91,14 +78,13 @@ public class Base : MonoBehaviour
     public void AddUnit(Unit unit)
     {
         _units.Add(unit);
-        unit.InitBaseCreator(_baseCreator);
     }
 
     public void GiveCommandUnit()
     {
-        bool _isFoundFreeUnit = false;
+        bool isFoundFreeUnit = false;
 
-        for (int i = 0; i < _units.Count && _isFoundFreeUnit == false; i++)
+        for (int i = 0; i < _units.Count && isFoundFreeUnit == false; i++)
         {
             if (_units.Count > 1)
                 CanBuildNewBase = true;
@@ -109,27 +95,18 @@ public class Base : MonoBehaviour
             {
                 if (_isCommandToCreateNewBase && _baseStorage.ResourcesCount >= 5)
                 {
-                    _isCommandToCreateNewBase = false;
-                    _baseStorage.SpendResourcesToNewBase();
-                    _units[i].StartCreateNewBase(_flag, _resourcesSpawner, _globalStorage);
-                    _units.RemoveAt(i);
-                    _isFoundFreeUnit = true;
+                    isFoundFreeUnit = true;
+                    CreateNewBase(_units[i]);
                 }
                 else if (_baseStorage.ResourcesCount >= 3 && _isCommandToCreateNewBase == false)
                 {
-                    _baseStorage.SpendResourcesToNewUnit();
-                    GiveSpawnCommand();
-                    _isFoundFreeUnit = true;
+                    isFoundFreeUnit = true;
+                    AddNewUnit();
                 }
                 else
                 {
-                    Resource targetResource = _globalStorage.GiveTargetResource();
-
-                    if (targetResource == null)
-                        return;
-
-                    _units[i].StartMission(targetResource);
-                    _isFoundFreeUnit = true;
+                    isFoundFreeUnit = true;
+                    SendUnitToResource(_units[i]);
                 }
 
             }
@@ -142,6 +119,30 @@ public class Base : MonoBehaviour
             StopCoroutine(_coroutine);
 
         _coroutine = StartCoroutine(GiveCommand());
+    }
+
+    private void CreateNewBase(Unit unit)
+    {
+        _isCommandToCreateNewBase = false;
+        _baseStorage.SpendResourcesToNewBase();
+        unit.StartCreateNewBase(_flag, _resourcesSpawner);
+        _units.Remove(unit);
+    }
+
+    private void SendUnitToResource(Unit unit)
+    {
+        Resource targetResource = _globalStorage.GiveTargetResource();
+
+        if (targetResource == null)
+            return;
+
+        unit.StartMission(targetResource);
+    }
+
+    private void AddNewUnit()
+    {
+        _baseStorage.SpendResourcesToNewUnit();
+        GiveSpawnCommand();
     }
 
     private IEnumerator GiveCommand()

@@ -1,4 +1,3 @@
-using System;
 using UnityEngine;
 
 public class RayReader : MonoBehaviour
@@ -6,6 +5,7 @@ public class RayReader : MonoBehaviour
     [SerializeField] private PlayerInputController _controller;
     [SerializeField] private LayerMask _groundLayerMask;
     [SerializeField] private LayerMask _baseLayerMask;
+    [SerializeField] private NewBaseFlagPointer _newBaseFlagPointer;
 
     private bool _isBaseClicked = false;
     private Ray _ray;
@@ -37,9 +37,8 @@ public class RayReader : MonoBehaviour
 
                     _base = unitBase;
                     _isBaseClicked = true;
-                    Vector3 worldPosition = _hit.point;
 
-                    Debug.Log($"Base: {worldPosition}");
+                    Debug.Log($"Base: {_hit.point}");
                     Debug.DrawRay(_ray.origin, _ray.direction * _hit.distance, Color.red, 2f);
                 }
             }
@@ -57,7 +56,8 @@ public class RayReader : MonoBehaviour
                 Debug.Log($"World position: {worldPosition1}");
                 Debug.DrawRay(_ray.origin, _ray.direction * _hit.distance, Color.red, 2f);
 
-                _base.PutFlag(worldPosition1);
+                _newBaseFlagPointer.Put(worldPosition1);
+                _base.GiveCreateNewBaseCommand(_newBaseFlagPointer.GetFlag());
             }
         }
 

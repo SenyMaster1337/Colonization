@@ -1,4 +1,5 @@
 using System;
+using System.Xml.Linq;
 using UnityEngine;
 
 public class NewBaseFlagPointer : MonoBehaviour
@@ -10,14 +11,24 @@ public class NewBaseFlagPointer : MonoBehaviour
     private bool _isFlagInstalled = false;
     private Flag _tempFlag;
 
-    public void Put(Vector3 worldPosition1)
+    private void Start()
     {
-        if(_isFlagInstalled)
-            _tempFlag.Remove();
-
         _tempFlag = Instantiate(_flag);
-        _tempFlag.transform.position = worldPosition1;
+    }
+
+    public void Put(Vector3 worldPosition)
+    {
+        if (_isFlagInstalled)
+            _tempFlag.gameObject.SetActive(false);
+
+        _tempFlag.gameObject.SetActive(true);
+        _tempFlag.transform.position = worldPosition;
         FlagInstalled?.Invoke(_tempFlag);
         _isFlagInstalled = true;
+    }
+
+    public Flag GetFlag()
+    {
+        return _tempFlag;
     }
 }

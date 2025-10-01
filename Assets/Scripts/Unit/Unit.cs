@@ -9,10 +9,9 @@ public class Unit : MonoBehaviour
     [SerializeField] private TargetFlipper _flipper;
     [SerializeField] private UnitMover _mover;
     [SerializeField] private ResourcePicker _resourcePicker;
+    [SerializeField] private BaseCreator _baseCreator;
 
-    private BaseCreator _baseCreator;
     private ResourcesSpawner _resourcesSpawner;
-    private GlobalStorage _globalStorage;
     private Resource _resourceTarget;
     private Flag _flag;
     private Coroutine _coroutine;
@@ -20,7 +19,7 @@ public class Unit : MonoBehaviour
     private Vector3 _spawnPoint;
     private Vector3 _tempSpawnPoint;
     private Vector3 _resourceTargetStartPosition;
-    private float _thresholdValue = 1f;
+    private float _thresholdValue = 3f;
 
     private Vector3 _randomSpawnPoint;
     private float _minRandomOffsetX = -7f;
@@ -54,17 +53,27 @@ public class Unit : MonoBehaviour
         _randomSpawnPoint = new Vector3(centerBaseSpawnPoint.x + randomOffsetX, centerBaseSpawnPoint.y, centerBaseSpawnPoint.z + randomOffsetZ);
     }
 
-    public void StartCreateNewBase(Flag flag, ResourcesSpawner resourcesSpawner, GlobalStorage globalStorage)
+    public void StartCreateNewBase(Flag flag, ResourcesSpawner resourcesSpawner)
     {
         _flag = flag;
         _tempSpawnPoint = flag.transform.position;
         _resourcesSpawner = resourcesSpawner;
-        _globalStorage = globalStorage;
 
         if (_coroutine != null)
             StopCoroutine(_coroutine);
 
         _coroutine = StartCoroutine(PerformCreateNewBase());
+    }
+
+    public void StartMission(Resource resourceTarget)
+    {
+        _resourceTarget = resourceTarget;
+        _resourceTargetStartPosition = resourceTarget.transform.position;
+
+        if (_coroutine != null)
+            StopCoroutine(_coroutine);
+
+        _coroutine = StartCoroutine(PerformMission());
     }
 
     private IEnumerator ChangeSpawnPoint()
@@ -79,7 +88,7 @@ public class Unit : MonoBehaviour
     {
         yield return RunToNewSpawnPointBase();
 
-        _baseCreator.CreateBase(_flag.transform.position, this, _resourcesSpawner, _globalStorage, _baseCreator);
+        _baseCreator.CreateBase(_flag.transform.position, this, _resourcesSpawner);
 
         _animatorParameters.StopRun();
 
@@ -98,18 +107,7 @@ public class Unit : MonoBehaviour
 
         yield return ChangeSpawnPoint();
 
-        _flag.Remove();
-    }
-
-    public void StartMission(Resource resourceTarget)
-    {
-        _resourceTarget = resourceTarget;
-        _resourceTargetStartPosition = resourceTarget.transform.position;
-
-        if (_coroutine != null)
-            StopCoroutine(_coroutine);
-
-        _coroutine = StartCoroutine(PerformMission());
+        _flag.gameObject.SetActive(false);
     }
 
     private IEnumerator PerformMission()
