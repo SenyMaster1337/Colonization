@@ -14,17 +14,17 @@ public class PlayerInputController : MonoBehaviour
     private void Awake()
     {
         _playerInput = new PlayerInput();
-
-        _playerInput.Player.SpawnFlag.performed += OnSpawnFlag;
     }
 
     private void OnEnable()
     {
+        _playerInput.Player.SpawnFlag.performed += OnSpawnFlag;
         _playerInput.Enable();
     }
 
     private void OnDisable()
     {
+        _playerInput.Player.SpawnFlag.performed -= OnSpawnFlag;
         _playerInput.Disable();
     }
 

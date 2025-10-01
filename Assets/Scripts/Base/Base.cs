@@ -12,7 +12,6 @@ public class Base : MonoBehaviour
     [SerializeField] private float _delayBeforeCommand;
     [SerializeField] private GlobalStorage _globalStorage;
     [SerializeField] private BaseStorage _baseStorage;
-    [SerializeField] private ResourceCountShower _resourceCountShower;
     [SerializeField] private UnitSpawnPoint _unitSpawnPoint;
     [SerializeField] private ResourcesSpawner _resourcesSpawner;
     [SerializeField] private UnitSpawner _unitSpawner;
@@ -27,7 +26,6 @@ public class Base : MonoBehaviour
     private void OnEnable()
     {
         _resourceBaseHandler.ResourceBaseDetected += _baseStorage.AddAvailableResource;
-        _baseStorage.ResourceCountChanged += _resourceCountShower.ChangeResourceCount;
         _unitSpawner.UnitSpawned += AddUnit;
 
         if (_resourcesSpawner != null && _globalStorage != null)
@@ -43,7 +41,6 @@ public class Base : MonoBehaviour
         _resourceScaner.ResourceDetected -= _globalStorage.AddResourcePosition;
         _resourceBaseHandler.ResourceBaseDetected -= _globalStorage.RemoveResource;
         _resourceBaseHandler.ResourceBaseDetected -= _baseStorage.AddAvailableResource;
-        _baseStorage.ResourceCountChanged -= _resourceCountShower.ChangeResourceCount;
         _resourceBaseHandler.ResourceBaseDetected -= _resourcesSpawner.ReleaseObjectToPool;
         _unitSpawner.UnitSpawned -= AddUnit;
     }
@@ -70,9 +67,9 @@ public class Base : MonoBehaviour
         _isCommandToCreateNewBase = true;
     }
 
-    public void GiveSpawnCommand()
+    public void SpawnUnit()
     {
-        _unitSpawner.SpawnUnit(_unitSpawnPoint.transform.position);
+        _unitSpawner.Spawn(_unitSpawnPoint.transform.position);
     }
 
     public void AddUnit(Unit unit)
@@ -142,7 +139,7 @@ public class Base : MonoBehaviour
     private void AddNewUnit()
     {
         _baseStorage.SpendResourcesToNewUnit();
-        GiveSpawnCommand();
+        SpawnUnit();
     }
 
     private IEnumerator GiveCommand()

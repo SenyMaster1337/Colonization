@@ -2,9 +2,9 @@ using UnityEngine;
 
 public class AnimatorParameters : MonoBehaviour
 {
-    [SerializeField] private Animator _animator;
-
     public readonly int IsRun = Animator.StringToHash(nameof(IsRun));
+
+    [SerializeField] private Animator _animator;
 
     public void PlayRun()
     {

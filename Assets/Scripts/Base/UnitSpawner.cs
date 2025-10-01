@@ -1,31 +1,18 @@
 using System;
 using UnityEngine;
 
-public class UnitSpawner : Spawners.Spawner<Unit>
+public class UnitSpawner : MonoBehaviour
 {
-    private Vector3 _spawnPoint;
+    [SerializeField] private Unit _prefab;
 
     public event Action<Unit> UnitSpawned;
 
-    public override Unit CreateFunc()
+    public void Spawn(Vector3 spawnPoint)
     {
-        Unit unit = Instantiate(Prefab);
-        unit.InitSpawnPoint(_spawnPoint);
-
-        return unit;
-    }
-
-    public override void ChangeParameters(Unit unit)
-    {
-        unit.transform.position = _spawnPoint;
+        Unit unit = Instantiate(_prefab);
+        unit.InitSpawnPoint(spawnPoint);
+        unit.transform.position = spawnPoint;
         unit.CreateSpawnPointToBase();
-        base.ChangeParameters(unit);
         UnitSpawned?.Invoke(unit);
-    }
-
-    public void SpawnUnit(Vector3 spawnPoint)
-    {
-        _spawnPoint = spawnPoint;
-        SpawnObject();
     }
 }

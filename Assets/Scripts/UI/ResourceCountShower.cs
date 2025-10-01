@@ -1,11 +1,18 @@
+using TMPro;
 using UnityEngine;
 
 public class ResourceCountShower : MonoBehaviour
 {
+    [SerializeField] private BaseStorage _baseStorage;
     [SerializeField] private ResourceCountText _resourceCountText;
 
-    public void ChangeResourceCount(int value)
+    private void OnEnable()
     {
-        _resourceCountText.ChangeValue(value);
+        _baseStorage.ResourceCountChanged += _resourceCountText.ChangeValue;
+    }
+
+    private void OnDisable()
+    {
+        _baseStorage.ResourceCountChanged -= _resourceCountText.ChangeValue;
     }
 }
